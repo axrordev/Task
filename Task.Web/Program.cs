@@ -2,8 +2,10 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Task.Data.DataContexts;
 using Task.Service.Services.Accounts;
+using Task.Service.Services.Users;
 using Task.Web.Extensions;
 using Task.Web.WebServices.Accounts;
+using Task.Web.WebServices.Users;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,7 +14,12 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<AppDbContext>(options
     => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddMemoryCache();
+
 builder.Services.AddScoped<IAccountService, AccountService>();
+builder.Services.AddScoped<IUserService, UserService>(); 
+builder.Services.AddScoped<IUserWebService, UserWebService>();
+builder.Services.AddScoped<IAccountWebService, AccountWebService>(); 
+
 //builder.Services.AddAutoMapper(typeof(MappingProfile));
 builder.Services.AddHttpContextAccessor();
 
