@@ -1,0 +1,164 @@
+﻿@* @using Task.Web.Models.Users
+@model IEnumerable<UserViewModel>
+
+
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+
+<div class="d-flex justify-content-between">
+    <div>
+        <button class="btn btn-secondary">Block</button>
+        <button class="btn btn-secondary">Unblock</button>
+        <button class="btn btn-danger">Delete</button>
+    </div>
+
+</div>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                <input type="checkbox" id="selectAll" />
+            </th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Last Login</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in Model)
+        {
+            <tr>
+                <td>
+                    <input type="checkbox" />
+                </td>
+                <td>@user.Name</td>
+                <td>@user.Email</td>
+                <td>@user.LastLoginTime?.ToString("HH:mm:ss, d MMM, yyyy")</td>
+                <td>@(user.IsBlocked ? "Blocked" : "Active")</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+        const selectAllCheckbox = document.getElementById('selectAll');
+
+        const checkboxes = document.querySelectorAll('table tbody input[type="checkbox"]');
+
+        selectAllCheckbox.addEventListener('change', function () {
+            checkboxes.forEach(function (checkbox) {
+                checkbox.checked = selectAllCheckbox.checked;
+            });
+        });
+    });
+</script>
+
+ *@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    @using Task.Web.Models.Users
+@model IEnumerable<UserViewModel>
+
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="d-flex justify-content-between">
+    <div>
+        <button class="btn btn-secondary">Block</button>
+        <button class="btn btn-secondary">Unblock</button>
+        <button id="deleteButton" class="btn btn-danger">Delete</button>
+    </div>
+</div>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                <input type="checkbox" id="selectAll" />
+            </th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Last Login</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in Model)
+        {
+            <tr>
+                <td>
+                    <input type="checkbox" data-user-id="@user.Id" />
+                </td>
+                <td>@user.Name</td>
+                <td>@user.Email</td>
+                <td>@user.LastLoginTime?.ToString("HH:mm:ss, d MMM, yyyy")</td>
+                <td>@(user.IsBlocked ? "Blocked" : "Active")</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const selectAllCheckbox = document.getElementById('selectAll');
+        const checkboxes = document.querySelectorAll('table tbody input[type="checkbox"]');
+        const deleteButton = document.getElementById('deleteButton');
+
+        selectAllCheckbox.addEventListener('change', function () {
+            checkboxes.forEach(function (checkbox) {
+                checkbox.checked = selectAllCheckbox.checked;
+            });
+        });
+
+        deleteButton.addEventListener('click', function () {
+            const selectedUserIds = Array.from(checkboxes)
+                .filter(checkbox => checkbox.checked)
+                .map(checkbox => checkbox.getAttribute('data-user-id'));
+
+            if (selectedUserIds.length > 0) {
+                fetch('/Home/DeleteUsers', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('input[name="__RequestVerificationToken"]').value // CSRF tokenni qo'shish
+                    },
+                    body: JSON.stringify(selectedUserIds)
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            location.reload(); // Sahifani qayta yuklash
+                        } else {
+                            alert('Error deleting users');
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+            }
+        });
+    });
+</script>
