@@ -8,22 +8,25 @@ using TaskAdmin.Web.Models.Users;
 
 namespace TaskAdmin.Web.WebServices.Accounts;
 
-public class AccountWebService(IAccountService accountService, IUserService userService, IMapper mapper) : IAccountWebService
+public class AccountWebService(IAccountService accountService, IMapper mapper) : IAccountWebService
 {
     public async ValueTask RegisterAsync(RegisterModel registerModel)
     {
         await accountService.RegisterAsync(mapper.Map<User>(registerModel));
     }
 
-    public void RegisterVerify(string email, string code)
+    public async ValueTask<LoginViewModel> RegisterVerifyAsync(string email, string code)
     {
-        accountService.RegisterVerify(email, code);
-    }
-
-    public async ValueTask<UserViewModel> CreateAsync(string email)
-    {
-        var result = await accountService.CreateAsync(email);
-        return mapper.Map<UserViewModel>(result);
+        var result =  await accountService.RegisterVerifyAsync(email, code);
+        return new LoginViewModel
+        {
+            Id = result.user.Id,
+            Name = result.user.Name,
+            Email = result.user.Email,
+            Token = result.token,
+            IsBlocked = result.user.IsBlocked,
+            LastLoginTime = result.user.LastLoginTime,
+        };
     }
 
     public async ValueTask<LoginViewModel> LoginAsync(LoginModel model)
@@ -35,6 +38,8 @@ public class AccountWebService(IAccountService accountService, IUserService user
             Name = result.user.Name,
             Email = result.user.Email,
             Token = result.token,
+            IsBlocked = result.user.IsBlocked,
+            LastLoginTime = result.user.LastLoginTime,
         };
     }
 }

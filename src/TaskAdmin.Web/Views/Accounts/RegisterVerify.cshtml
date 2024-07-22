@@ -1,4 +1,5 @@
-﻿@* 
+﻿@using TaskAdmin.Web.Models.Accounts
+
 @model RegisterVerifyModel
 
 @{
@@ -7,7 +8,7 @@
 
 <h2>@ViewData["Title"]</h2>
 
-<form asp-action="RegisterVerify" method="post">
+<form asp-action="RegisterVerify" asp-controller="Accounts" method="post">
     <div class="form-group">
         <label for="email">Email</label>
         <input type="email" name="email" class="form-control" />
@@ -18,6 +19,5 @@
         <input type="text" name="code" class="form-control" />
         <span asp-validation-for="Code" class="text-danger"></span>
     </div>
-    <button type="submit" class="btn btn-primary">Verify</button>
+    <button style="margin-top:10px" type="submit" class="btn btn-primary">Verify</button>
 </form>
- *@

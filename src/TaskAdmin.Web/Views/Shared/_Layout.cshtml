@@ -31,9 +31,12 @@
                                 }
                             </h4>
                         </li>
-                        <li>
-                            <a asp-controller="Accounts" asp-action="Logout" class="btn btn-danger btn-rounded">Logout</a>
-                        </li>
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            <li>
+                                <a asp-controller="Accounts" asp-action="Logout" class="btn btn-danger btn-rounded">Logout</a>
+                            </li>
+                        }                    
                         
                     </ul>
                 </div>

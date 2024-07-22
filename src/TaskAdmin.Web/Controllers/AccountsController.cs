@@ -52,68 +52,86 @@ public class AccountsController(IAccountWebService accountWebService) : Controll
         return View();
     }
 
-    // GET: /Account/Register
     [HttpGet("register")]
     public IActionResult Register()
     {
         return View();
     }
 
-    // POST: /Account/Register
     [HttpPost("register")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Register(RegisterModel model)
     {
-        if (ModelState.IsValid)
+        try
         {
-            await accountWebService.RegisterAsync(model);
-            return RedirectToAction("RegisterVerify");
+            if (ModelState.IsValid)
+            {
+                if (string.IsNullOrEmpty(model.Password))
+                {
+                    ModelState.AddModelError("Password", "Password is required.");
+                    return View(model);
+                }
+
+                await accountWebService.RegisterAsync(model);
+                return RedirectToAction("RegisterVerify", new { email = model.Email });
+            }
+            return View(model);
         }
+        catch (AlreadyExistException ex)
+        {
+            ModelState.AddModelError(string.Empty, ex.Message); 
+            return View(model); 
+        }
+        catch (ForbiddenException ex)
+        {
+            ViewBag.Exception = ex.Message; 
+        }
+
         return View(model);
     }
 
-    // GET: /Account/RegisterVerify
+
     [HttpGet("register-verify")]
-    public IActionResult RegisterVerify()
+    public IActionResult RegisterVerifyAsync()
     {
+        if (HttpContext.User.Identity.IsAuthenticated)
+            return RedirectToAction("Index", "Home");
+
         return View();
     }
 
-    // POST: /Account/RegisterVerify
     [HttpPost("register-verify")]
     [ValidateAntiForgeryToken]
-    public IActionResult RegisterVerify(string email, string code)
-    {
-        if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(code))
+    public async Task<IActionResult> RegisterVerify(RegisterVerifyModel model)
+    {       
+        try
         {
-            ModelState.AddModelError("", "Email and code are required.");
-            return View();
+            var result = await accountWebService.RegisterVerifyAsync(model.Email, model.Code);
+            if (result is not null)
+            {
+                var claims = new List<Claim>
+                {
+                   new Claim("Id", result.Id.ToString()),
+                   new Claim("Name", $"{result.Name}")
+                };
+
+                var claimIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+
+                await HttpContext.SignInAsync(
+                    CookieAuthenticationDefaults.AuthenticationScheme,
+                    new ClaimsPrincipal(claimIdentity));
+
+                return RedirectToAction("Index", "Home");
+            }
+
+            return View(model);
+        }
+        catch (ForbiddenException ex)
+        {
+            ViewBag.Exception = ex.Message;
         }
 
-        accountWebService.RegisterVerify(email, code);
-        return RedirectToAction("Create");
-    }
-
-    // GET: /Account/Create
-    [HttpGet("create")]
-    public IActionResult Create()
-    {
         return View();
-    }
-
-    // POST: /Account/Create
-    [HttpPost("create")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(string email)
-    {
-        if (string.IsNullOrEmpty(email))
-        {
-            ModelState.AddModelError("", "Email is required.");
-            return View();
-        }
-
-        var userViewModel = await accountWebService.CreateAsync(email);
-        return View(userViewModel);
     }
 
     public async ValueTask<IActionResult> Logout()

@@ -1,7 +1,7 @@
-﻿//namespace Task.Web.Models.Accounts;
+﻿namespace TaskAdmin.Web.Models.Accounts;
 
-//public class RegisterVerifyModel
-//{
-//    public string Email { get; set; }
-//    public string Code { get; set; }
-//}
+public class RegisterVerifyModel
+{
+    public string Email { get; set; }
+    public string Code { get; set; }
+}

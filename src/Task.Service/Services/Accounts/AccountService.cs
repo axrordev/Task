@@ -27,16 +27,25 @@ public class AccountService(AppDbContext context, IMemoryCache memoryCache) : IA
 		await EmailHelper.SendCodeAsync(memoryCache, user.Email, $"registerCodeKey-{user.Email}");
 	}
 
-	public void RegisterVerify(string email, string code)
-	{
-		var codeInCache = memoryCache.Get($"registerCodeKey-{email}");
+	public async ValueTask<(User user, string token)> RegisterVerifyAsync(string email, string code)
+	{     
+        var codeInCache = memoryCache.Get($"registerCodeKey-{email}");
 		if (codeInCache?.ToString() != code)
 			throw new ArgumentIsNotValidException("Invalid code");
 
 		CacheSet($"verifiedAccount-{email}", "verified");
 
-        return;
-	}
+		await CreateAsync(email);
+
+        var existUser = await context.Users
+            .FirstOrDefaultAsync(user => user.Email == email)
+                ?? throw new ForbiddenException("Email or Password is invalid");
+
+        existUser.LastLoginTime = DateTime.UtcNow;
+        await context.SaveChangesAsync();
+
+        return (user: existUser, token: AuthHelper.GenerateToken(existUser.Id, existUser.Email));
+    }
 
 	public async ValueTask<User> CreateAsync(string email)
 	{

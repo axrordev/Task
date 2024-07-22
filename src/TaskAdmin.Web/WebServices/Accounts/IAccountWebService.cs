@@ -6,7 +6,6 @@ namespace TaskAdmin.Web.WebServices.Accounts;
 public interface IAccountWebService
 {
     ValueTask RegisterAsync(RegisterModel registerModel);
-    void RegisterVerify(string email, string code);
-    ValueTask<UserViewModel> CreateAsync(string email);
+    ValueTask<LoginViewModel> RegisterVerifyAsync(string email, string code);
     ValueTask<LoginViewModel> LoginAsync(LoginModel model);
 }

@@ -22,13 +22,14 @@ namespace TaskAdmin.Web.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> DeleteUsers([FromBody] List<long> userIds)
+        public async Task<IActionResult> DeleteUsers(List<long> selectedUserIds)
         {
-            foreach (var userId in userIds)
+            foreach (var id in selectedUserIds)
             {
-                await userWebService.DeleteAsync(userId);
+                await userWebService.DeleteAsync(id);
             }
-            return Ok();
+
+            return RedirectToAction("Index");
         }
 
         public IActionResult Index()

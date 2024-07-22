@@ -8,7 +8,10 @@
 
 <h2>@ViewData["Title"]</h2>
 
-<form asp-action="Register" method="post">
+<div style="">
+
+</div>
+<form asp-action="Register" method="post" asp-controller="Accounts">
     <div class="form-group">
         <label asp-for="Name"></label>
         <input asp-for="Name" class="form-control" />
@@ -24,5 +27,16 @@
         <input asp-for="Password" class="form-control" type="password" />
         <span asp-validation-for="Password" class="text-danger"></span>
     </div>
-    <button type="submit" class="btn btn-primary">Register</button>
+    <div style="margin= 3px" asp-validation-summary="ModelOnly" class="text-danger"></div>
+    @if (ViewBag.Exception != null)
+    {
+        <div class="alert alert-danger">
+            @ViewBag.Exception
+        </div>
+    }
+    <div style="display:flex">
+        <button style="margin-right:20px" type="submit" class="btn btn-primary">Register</button>
+        <a asp-controller="Accounts" asp-action="Login">Back to List</a>
+    </div>
+
 </form>
