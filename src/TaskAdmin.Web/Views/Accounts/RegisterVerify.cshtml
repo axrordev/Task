@@ -1,0 +1,23 @@
+﻿@* 
+@model RegisterVerifyModel
+
+@{
+    ViewData["Title"] = "Register Verification";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<form asp-action="RegisterVerify" method="post">
+    <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" name="email" class="form-control" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label for="code">Verification Code</label>
+        <input type="text" name="code" class="form-control" />
+        <span asp-validation-for="Code" class="text-danger"></span>
+    </div>
+    <button type="submit" class="btn btn-primary">Verify</button>
+</form>
+ *@
