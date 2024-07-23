@@ -1,3 +1,6 @@
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 using Task.Data.DataContexts;
@@ -8,6 +11,7 @@ using TaskAdmin.Web.WebServices.Users;
 
 namespace TaskAdmin.Web.Controllers
 {
+    [Authorize]
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
@@ -27,6 +31,24 @@ namespace TaskAdmin.Web.Controllers
             foreach (var id in selectedUserIds)
             {
                 await userWebService.DeleteAsync(id);
+
+                if (HttpContext.User.Identity.IsAuthenticated)
+                {
+                    var userIdClaim = HttpContext.User.FindFirst("Id")?.Value;
+
+                    if (userIdClaim != null && long.TryParse(userIdClaim, out long userId))
+                    {
+                        var user = await userWebService.GetByIdAsync(userId);
+
+                        if (user != null && user.IsDeleted)
+                        {
+                            // Log out the user by clearing the cookie
+                            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                            HttpContext.Response.Redirect("/Accounts/Login");
+                            
+                        }
+                    }
+                }
             }
 
             return RedirectToAction("Index");

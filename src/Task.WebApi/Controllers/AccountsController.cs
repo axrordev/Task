@@ -19,9 +19,9 @@ namespace Task.WebApi.Controllers
         }
 
         [HttpGet("register-verify")]
-        public  IActionResult RegisterVerify(string email, string code)
+        public  async ValueTask<IActionResult> RegisterVerifyAsync(string email, string code)
         {
-            accountApiService.RegisterVerify(email, code);
+            await accountApiService.RegisterVerifyAsync(email, code);
             return Ok(new Response
             {
                 StatusCode = 200,

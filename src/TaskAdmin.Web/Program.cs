@@ -48,6 +48,16 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+//app.UseMiddleware<CheckUserStatusMiddleware>();
+app.Use(async (context, next) =>
+{
+    // Resolve the IUserService from the scoped service provider
+    var userService = context.RequestServices.GetRequiredService<IUserService>();
+    var middleware = new CheckUserStatusMiddleware(next, userService);
+    await middleware.InvokeAsync(context);
+});
+
+
 app.UseAuthentication();
 
 app.UseAuthorization();

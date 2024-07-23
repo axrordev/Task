@@ -19,5 +19,13 @@ public class UserService(AppDbContext context) : IUserService
 
         return true;
     }
+
+    public async ValueTask<User> GetByIdAsync(long id)
+    {
+        var existUser = await context.Users.FirstOrDefaultAsync(user => user.Id == id)
+           ?? throw new NotFoundException("User is not found");
+
+        return existUser;
+    }
 }
 

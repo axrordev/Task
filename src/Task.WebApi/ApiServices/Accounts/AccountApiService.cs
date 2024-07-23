@@ -13,9 +13,9 @@ public class AccountApiService(IMapper mapper, IAccountService accountService) :
         await accountService.RegisterAsync(mapper.Map<User>(registerModel));
     }
 
-    public void RegisterVerify(string email, string code)
+    public async ValueTask RegisterVerifyAsync(string email, string code)
     {
-         accountService.RegisterVerify(email, code);
+         await accountService.RegisterVerifyAsync(email, code);
     }
 
     public async ValueTask<UserViewModel> CreateAsync(string email)
