@@ -10,11 +10,19 @@ using TaskAdmin.Web.WebServices.Users;
 
 var builder = WebApplication.CreateBuilder(args);
 
-/// Add services to the container.
+// Add services to the container.
 builder.Services.AddControllersWithViews();
-builder.Services.AddDbContext<AppDbContext>(options
-    => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddMemoryCache();
+
+// Session qo'llab-quvvatlashni qo'shing
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30); // Session muddati
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -33,6 +41,9 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.ExpireTimeSpan = TimeSpan.FromHours(6);
     });
 
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+
 var app = builder.Build();
 
 app.AddPathInitializer();
@@ -48,18 +59,20 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-//app.UseMiddleware<CheckUserStatusMiddleware>();
-app.Use(async (context, next) =>
-{
-    // Resolve the IUserService from the scoped service provider
-    var userService = context.RequestServices.GetRequiredService<IUserService>();
-    var middleware = new CheckUserStatusMiddleware(next, userService);
-    await middleware.InvokeAsync(context);
-});
+// Sessionni yoqing
+app.UseSession();
 
+// CheckUserStatusMiddleware qo'llang
+//app.Use(async (context, next) =>
+//{
+//    var userService = context.RequestServices.GetRequiredService<IUserService>();
+//    var middleware = new CheckUserStatusMiddleware(next, userService);
+//    await middleware.InvokeAsync(context);
+//});
+
+app.UseMiddleware<CheckUserStatusMiddleware>();
 
 app.UseAuthentication();
-
 app.UseAuthorization();
 
 app.MapControllerRoute(

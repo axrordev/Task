@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 using Task.Data.DataContexts;
 using TaskAdmin.Web.Models;
@@ -15,39 +16,25 @@ namespace TaskAdmin.Web.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
-        private readonly AppDbContext context;
         private readonly IUserWebService userWebService;
+        private readonly AppDbContext context;
 
         public HomeController(ILogger<HomeController> logger, AppDbContext context, IUserWebService userWebService)
         {
             _logger = logger;
-            this.context = context;
             this.userWebService = userWebService;
+            this.context = context;
         }
 
         [HttpPost]
-        public async Task<IActionResult> DeleteUsers(List<long> selectedUserIds)
+        public async Task<IActionResult> DeleteUsers(long[] selectedUserIds)
         {
-            foreach (var id in selectedUserIds)
+            foreach (var userId in selectedUserIds)
             {
-                await userWebService.DeleteAsync(id);
-
-                if (HttpContext.User.Identity.IsAuthenticated)
+                var user = await userWebService.GetByIdAsync(userId);
+                if (user != null)
                 {
-                    var userIdClaim = HttpContext.User.FindFirst("Id")?.Value;
-
-                    if (userIdClaim != null && long.TryParse(userIdClaim, out long userId))
-                    {
-                        var user = await userWebService.GetByIdAsync(userId);
-
-                        if (user != null && user.IsDeleted)
-                        {
-                            // Log out the user by clearing the cookie
-                            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-                            HttpContext.Response.Redirect("/Accounts/Login");
-                            
-                        }
-                    }
+                    await userWebService.DeleteAsync(userId);
                 }
             }
 

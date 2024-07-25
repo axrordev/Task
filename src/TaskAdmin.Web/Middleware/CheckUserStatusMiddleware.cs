@@ -1,40 +1,52 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
-using System.Threading.Tasks; // Import the correct namespace for Task
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using System.Security.Claims;
+using System.Threading.Tasks;
 using Task.Service.Services.Users;
 
 public class CheckUserStatusMiddleware
 {
     private readonly RequestDelegate _next;
-    private readonly IUserService _userService;
+    private readonly ILogger<CheckUserStatusMiddleware> _logger;
 
-    public CheckUserStatusMiddleware(RequestDelegate next, IUserService userService)
+    public CheckUserStatusMiddleware(RequestDelegate next, ILogger<CheckUserStatusMiddleware> logger)
     {
         _next = next;
-        _userService = userService;
+        _logger = logger;
     }
 
-    public async System.Threading.Tasks.Task InvokeAsync(HttpContext context) // Fully qualify Task
+    public async System.Threading.Tasks.Task InvokeAsync(HttpContext context)
     {
+        _logger.LogInformation("CheckUserStatusMiddleware invoked.");
+
         if (context.User.Identity.IsAuthenticated)
         {
-            var userIdClaim = context.User.FindFirst("Id")?.Value;
+            var userIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            _logger.LogInformation($"User ID claim: {userIdClaim}");
 
             if (userIdClaim != null && long.TryParse(userIdClaim, out long userId))
             {
-                var user = await _userService.GetByIdAsync(userId);
-
-                if (user != null && user.IsDeleted)
+                using (var scope = context.RequestServices.CreateScope())
                 {
-                    // Log out the user by clearing the cookie
-                    await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-                    context.Response.Redirect("/Accounts/Login");
-                    return;
+                    var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
+                    var user = await userService.GetByIdAsync(userId);
+                    _logger.LogInformation($"User: {user}");
+
+                    if (user == null || user.IsBlocked || user.IsDeleted)
+                    {
+                        _logger.LogInformation("User is either blocked or deleted. Redirecting to login page.");
+                        await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                        context.Response.Redirect("/Accounts/Login");
+                        return;
+                    }
                 }
             }
         }
 
-        await _next(context); // Ensure this is reachable and returns a Task
+        await _next(context);
+
     }
 }
