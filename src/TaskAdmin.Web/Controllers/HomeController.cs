@@ -27,14 +27,52 @@ namespace TaskAdmin.Web.Controllers
         }
 
         [HttpPost]
+        public async Task<IActionResult> BlockUsers(List<long> selectedUserIds)
+        {
+            if (selectedUserIds != null && selectedUserIds.Any())
+            {
+                var users = context.Users.Where(u => selectedUserIds.Contains(u.Id)).ToList();
+                foreach (var user in users)
+                {
+                    user.IsBlocked = true;
+                }
+
+                await context.SaveChangesAsync();
+            }
+
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UnblockUsers(List<long> selectedUserIds)
+        {
+            if (selectedUserIds != null && selectedUserIds.Any())
+            {
+                var users = context.Users.Where(u => selectedUserIds.Contains(u.Id)).ToList();
+                foreach (var user in users)
+                {
+                    user.IsBlocked = false;
+                }
+
+                await context.SaveChangesAsync();
+            }
+
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
         public async Task<IActionResult> DeleteUsers(long[] selectedUserIds)
         {
-            foreach (var userId in selectedUserIds)
+            var currentUserId = Convert.ToInt64(HttpContext?.User?.FindFirst("Id").Value);
+
+            foreach (var id in selectedUserIds)
             {
-                var user = await userWebService.GetByIdAsync(userId);
-                if (user != null)
+                await userWebService.DeleteAsync(id);
+                if (id == currentUserId)
                 {
-                    await userWebService.DeleteAsync(userId);
+                    await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                    HttpContext.Response.Redirect("/Accounts/Login");
+
                 }
             }
 
